@@ -10,14 +10,18 @@ library(dplyr)
 
 # Date
 ST$Date_time <- as.POSIXct(ST$observation_date, format="%Y/%m/%d %H:%M") #don't have to set tz
-range(ST$Date_time)
+range(ST$Date_time) # 2024-03
 ST2024 <- ST[ST$Date_time >= "2020-01-01",] #2020-2024
+range(ST2024$duration_minutes, na.rm = T)
 
 # 2023-03-11 chaos Hanpo
 # 2022-03-25 chaos Powei
+# 2024-01-02, 2024-02-04 long list
 ST2024 <- ST2024 %>% 
   filter(!(Date_time == "2023-03-11" & !grepl("obsr557276", observer_id))) %>%
-  filter(!(Date_time == "2022-03-25" & !grepl("obsr659889", observer_id)))
+  filter(!(Date_time == "2022-03-25" & !grepl("obsr659889", observer_id))) %>%
+  filter(!(Date_time == "2024-01-02" & duration_minutes > 30)) %>% 
+  filter(!(Date_time == "2024-02-04" & duration_minutes > 30))
 
 # month
 ST2024$month <- as.numeric(strftime(as.POSIXlt(ST2024$Date_time),format="%m"))
@@ -32,9 +36,9 @@ ggplot(month_count, aes(x=month, y=observation_count)) +
   theme_classic()
 
 # plumage
-month_count$adult <- c(0, 10, 29, 7, 0, 0, 0, 0, 0, 0, 0, 0)
-month_count$subadult <- c(0, 2, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0)
-month_count$immature <- c(0, 4, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0)
+month_count$adult <- c(2, 10, 29, 9, 0, 0, 0, 0, 0, 0, 0, 0)
+month_count$subadult <- c(1, 2, 3, 2, 2, 0, 0, 0, 0, 0, 0, 0)
+month_count$immature <- c(1, 4, 5, 3, 0, 0, 0, 0, 0, 0, 0, 0)
 month_count <- month_count %>%
   mutate(
     percentage_adult = (adult / (adult+subadult+immature)) * 100,
@@ -42,16 +46,16 @@ month_count <- month_count %>%
     percentage_immature = (immature / (adult+subadult+immature)) * 100
   ) %>%
   replace(is.na(.), 0)
-plumage <- data.frame(month = rep(month_count[c(2:5),1], 3), 
-                      perc = c(unlist(month_count[c(2:5),c(6:8)])), 
-                      class = rep(c("adult", "subadult", "immature"), each = 4))
+plumage <- data.frame(month = rep(month_count[c(1:5),1], 3), 
+                      perc = c(unlist(month_count[c(1:5),c(6:8)])), 
+                      class = rep(c("adult", "subadult", "immature"), each = 5))
 plumage$class <- factor(plumage$class, levels = c("adult", "subadult", "immature"))
 ggplot(plumage, aes(month, perc, fill = class)) +
   geom_bar(stat = "identity") + 
   scale_fill_manual(values = c("adult" = "#EED787", "subadult" = "#F89B9B", "immature" = "#443C5D"), name = "Class") + 
   theme_minimal() +
   ylab("percentage") + 
-  ggtitle("Feb-May plumage")
+  ggtitle("Jan-May plumage")
 
 # distribution
 xyplot(latitude ~ longitude, data = ST2024)
